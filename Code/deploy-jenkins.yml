@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-service
+  labels:
+    app: Jen-service
+spec:
+  ports:
+  - port: 9090
+    nodePort: 30200
+  type: NodePort
+  selector:
+    app: Jen-service
+    tier: jenkins
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins-deployment
+  labels:
+    app: jenkins
+spec:
+  selector:
+    matchLabels:
+      app: Jen-service
+      tier: jenkins
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: Jen-service
+        tier: jenkins
+    spec:
+      containers:
+      - image: gck31/jenkins:latest
+        name: jenkins
+        ports:
+        - containerPort: 9090
+          name: jenkins
+        volumeMounts:
+        - name: jenkins-persistent-storage
+          mountPath: /var/lib/jenkins
+      volumes:
+      - name: jenkins-persistent-storage
+        persistentVolumeClaim:
+          claimName: efs-jenkins
